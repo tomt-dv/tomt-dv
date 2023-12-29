@@ -1,6 +1,6 @@
 - 👋 Hi, I’m @tomt-dv
 - 👀 I’m interested in Oracle database administration
-- 🌱 I’m currently learning Ansible, Oracle 21c new features, Powershell, Vagrant
+- 🌱 I’m currently learning Ansible, Oracle 23c new features, Powershell, Vagrant
 - 💞️ I’m looking to collaborate on SQL Scripting
 - 📫 How to reach me ...
 
