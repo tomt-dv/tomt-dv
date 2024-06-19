@@ -1,0 +1,76 @@
+Notes on installing Oracle 19c Restart on Oracle Enterprise Linux 9.
+
+Hardware:
+Virtual Machine in VMWare Professional
+4 cores
+16G RAM
+100G root volume
+20G block device to be used for DATA
+40G block device to be used for FRA
+
+OS Installation:
+OL 9.2
+
+dnf update to current
+
+dnf install oracle-database-preinstall-19c
+
+add groups asmadmin, asmdba, and asmoper.
+
+Add groups to oracle user
+
+Add grid user, with same groups as oracle
+
+Add group wheel to both oracle and grid
+
+Set password for both oracle and grid
+
+disable SELinux
+stop and disable firewalld
+
+
+GI Installation:
+unzip GI media to /u01/app/19c/grid 
+replace OPatch with current (12.2.0.1.40)
+
+unzip latest patch set (October 2023) to /u01/app/grid/35742441
+
+As root, use asmcmd to initialize/label DATA and FRA disks
+[root@ol9dbtest bin]# export ORACLE_HOME=/u01/app/19c/grid
+[root@ol9dbtest bin]# export ORACLE_BASE=/tmp
+
+[root@ol9dbtest bin]# lsblk
+NAME                  MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sr0                    11:0    1 1024M  0 rom
+nvme0n1               259:0    0  100G  0 disk
+├─nvme0n1p1           259:1    0    2G  0 part /boot
+└─nvme0n1p2           259:2    0   98G  0 part
+  ├─ol_ol9dbtest-root 252:0    0   82G  0 lvm  /
+  └─ol_ol9dbtest-swap 252:1    0   16G  0 lvm  [SWAP]
+nvme0n2               259:3    0   20G  0 disk
+nvme0n3               259:4    0   40G  0 disk
+[root@ol9dbtest bin]# export PATH=$ORACLE_HOME/bin:$PATH
+
+[root@ol9dbtest bin]# asmcmd afd_label DATA1 /dev/nvme0n2 --init
+[root@ol9dbtest bin]# asmcmd afd_label FRA01 /dev/nvme0n3 --init
+
+As grid, start installation.  Setting CV_ASSUME_DISTID required for current version/patchset
+
+export CV_ASSUME_DISTID=OL8
+
+[grid@ol9dbtest grid]$ ./gridSetup.sh -applyRU /u01/app/grid/35742441/35642822
+Preparing the home to patch...
+Applying the patch /u01/app/grid/35742441/35642822...
+Successfully applied the patch.
+The log can be found at: /tmp/GridSetupActions2023-12-29_04-42-49PM/installerPatchActions_2023-12-29_04-42-49PM.log
+Launching Oracle Grid Infrastructure Setup Wizard...
+
+<in GUI>
+Configure for Standalone server (restart)
+Disk group name: DATA
+Redundancy: External
+Change Discovery Path to /dev/nvme*
+Select /dev/nvme0n2 (the smaller disk, known to be for DATA.  AFD not running yet.)
+Select Configure Oracle ASM Filter Driver
+
+Error raised:  INS-41223 ASM Filter Driver is not supported on this platform.
